@@ -12,10 +12,11 @@ using namespace cv;
 //#define ALL_POINTS (IMAGE_NUM*PAT_SIZE)
 #define CHESS_SIZE (24.0)       /* パターン1マスの1辺サイズ[mm] */
 
-void Calib::Calibrate(const int image_num)
+void Calib::Calibrate(const int image_pair_num)
 {
 	int i, j, k;
 	int corner_count, found;
+	int image_num = image_pair_num * 2;
 	int *p_count = new int[image_num];
 	int all_points = image_num * PAT_SIZE;
 	IplImage **src_img = new IplImage*[image_num];
@@ -82,15 +83,26 @@ void Calib::Calibrate(const int image_num)
 	cvInitMatHeader(&image_points, all_points, 1, CV_32FC2, corners);
 	cvInitMatHeader(&point_counts, image_num, 1, CV_32SC1, p_count);
 
-	// (5)内部パラメータ，歪み係数の推定
-	cvCalibrateCamera2(&object_points, &image_points, &point_counts, cvSize(src_img[0]->width, src_img[0]->height), intrinsic, distortion);
+	double rms = cvStereoCalibrate(&object_points, camera1ImagePoints, camera2ImagePoints,
+		cameraMatrix[0], distortionCoefficients[0],
+		cameraMatrix[1], distortionCoefficients[1],
+		imageSize, rotationMatrix, translation, essentialMatrix, fundamentalMatrix,
+		TermCriteria(CV_TERMCRIT_ITER + CV_TERMCRIT_EPS, 100, 1e-5),
+		CV_CALIB_FIX_ASPECT_RATIO +
+		CV_CALIB_ZERO_TANGENT_DIST +
+		CV_CALIB_SAME_FOCAL_LENGTH +
+		CV_CALIB_RATIONAL_MODEL +
+		CV_CALIB_FIX_K3 + CV_CALIB_FIX_K4 + CV_CALIB_FIX_K5);
 
-	// (6)外部パラメータの推定
-	CvMat sub_image_points, sub_object_points;
-	int base = 0;
-	cvGetRows(&image_points, &sub_image_points, base * PAT_SIZE, (base + 1) * PAT_SIZE);
-	cvGetRows(&object_points, &sub_object_points, base * PAT_SIZE, (base + 1) * PAT_SIZE);
-	cvFindExtrinsicCameraParams2(&sub_object_points, &sub_image_points, intrinsic, distortion, rotation, translation);
+	//// (5)内部パラメータ，歪み係数の推定
+	//cvCalibrateCamera2(&object_points, &image_points, &point_counts, cvSize(src_img[0]->width, src_img[0]->height), intrinsic, distortion);
+
+	//// (6)外部パラメータの推定
+	//CvMat sub_image_points, sub_object_points;
+	//int base = 0;
+	//cvGetRows(&image_points, &sub_image_points, base * PAT_SIZE, (base + 1) * PAT_SIZE);
+	//cvGetRows(&object_points, &sub_object_points, base * PAT_SIZE, (base + 1) * PAT_SIZE);
+	//cvFindExtrinsicCameraParams2(&sub_object_points, &sub_image_points, intrinsic, distortion, rotation, translation);
 
 	// (7)XMLファイルへの書き出し
 	CvFileStorage *fs;

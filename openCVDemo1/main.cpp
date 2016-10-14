@@ -4,5 +4,5 @@
 int main(int argh, char* argv[])
 {
 	int imgNum = Camera::takePic();
-	Calib::Calibrate(imgNum);
+	//Calib::Calibrate(imgNum);
 }
