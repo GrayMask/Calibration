@@ -2,13 +2,12 @@
 #include "Const.h";
 #include "opencv2/opencv.hpp";
 #include <iostream>;
-#include <afx.h>;
 using namespace std;
 using namespace cv;
 
 int Camera::takePic()
 {
-	VideoCapture cap[cameraNum];//デバイスのオープン\
+	VideoCapture *cap = new VideoCapture[cameraNum];//デバイスのオープン\
 
 	for (int i = 0; i < cameraNum; i++) {
 		cap[i] = VideoCapture(i);
@@ -16,16 +15,23 @@ int Camera::takePic()
 		{
 			//読み込みに失敗したときの処理
 			cout << "カメラ" << i << "読み込みに失敗した" << endl;
-			return;
+			return 0;
 		}
 	}
 	int count = 0;
+
+	Mat *frame = new Mat[cameraNum];
+	char **buf = new char*[cameraNum];
+	for (int i = 0; i < cameraNum; i++) {
+		buf[i] = new char[windowNameLength];
+		sprintf(buf[i], windowName, i);
+		cout << buf[i] << endl;
+	}
 	while (1)//無限ループ
 	{
-		Mat frame[cameraNum];
 		for (int i = 0; i < cameraNum; i++) {
-			cap[i] >> frame[0]; // get a new frame from camera
-			imshow("window" + i, frame[i]);//画像を表示．
+			cap[i] >> frame[i]; // get a new frame from camera
+			imshow(buf[i], frame[i]);//画像を表示．
 		}
 
 		int key = waitKey(1);
@@ -36,7 +42,7 @@ int Camera::takePic()
 		else if (key == 115)//sが押されたとき
 		{
 			for (int i = 0; i < cameraNum; i++) {
-				char * savedImgName;
+				char *savedImgName = new char[calibImgNameLength];
 				sprintf(savedImgName, calibImgName, count, i);
 				imwrite(savedImgName, frame[i]);
 			}
@@ -44,4 +50,5 @@ int Camera::takePic()
 		}
 	}
 	destroyAllWindows();
+	return count;
 }

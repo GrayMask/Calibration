@@ -24,6 +24,9 @@
     <ClCompile Include="Calib.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Const.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h">

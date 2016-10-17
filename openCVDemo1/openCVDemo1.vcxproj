@@ -148,6 +148,7 @@
   <ItemGroup>
     <ClCompile Include="Calib.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="Const.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>

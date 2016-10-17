@@ -7,27 +7,5 @@ d:\application programs\opencv\opencv\build\include\opencv2\core\persistence.hpp
 d:\application programs\opencv\opencv\build\include\opencv2\core\utility.hpp : warning C4819: The file contains a character that cannot be represented in the current code page (932). Save the file in Unicode format to prevent data loss
 d:\application programs\opencv\opencv\build\include\opencv2\core\utility.hpp : warning C4819: The file contains a character that cannot be represented in the current code page (932). Save the file in Unicode format to prevent data loss
 d:\document\project\opencv demo\opencvdemo1\opencvdemo1\camera.cpp(4): warning C4067: unexpected tokens following preprocessor directive - expected a newline
-d:\document\project\opencv demo\opencvdemo1\opencvdemo1\camera.cpp(5): warning C4067: unexpected tokens following preprocessor directive - expected a newline
-d:\application programs\vs\vc\atlmfc\include\afx.h(24): fatal error C1189: #error:  Building MFC application with /MD[d] (CRT dll version) requires MFC shared dll version. Please #define _AFXDLL or do not use /MD[d]
-  Calib.cpp
-d:\document\project\opencv demo\opencvdemo1\opencvdemo1\calib.cpp(1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
-d:\document\project\opencv demo\opencvdemo1\opencvdemo1\calib.cpp(2): warning C4067: unexpected tokens following preprocessor directive - expected a newline
-d:\document\project\opencv demo\opencvdemo1\opencvdemo1\calib.cpp(3): warning C4067: unexpected tokens following preprocessor directive - expected a newline
-d:\application programs\opencv\opencv\build\include\opencv2\core\mat.hpp(1965): warning C4819: The file contains a character that cannot be represented in the current code page (932). Save the file in Unicode format to prevent data loss
-d:\application programs\opencv\opencv\build\include\opencv2\core\persistence.hpp : warning C4819: The file contains a character that cannot be represented in the current code page (932). Save the file in Unicode format to prevent data loss
-d:\application programs\opencv\opencv\build\include\opencv2\core\utility.hpp : warning C4819: The file contains a character that cannot be represented in the current code page (932). Save the file in Unicode format to prevent data loss
-d:\application programs\opencv\opencv\build\include\opencv2\core\utility.hpp : warning C4819: The file contains a character that cannot be represented in the current code page (932). Save the file in Unicode format to prevent data loss
-d:\document\project\opencv demo\opencvdemo1\opencvdemo1\calib.cpp(4): warning C4067: unexpected tokens following preprocessor directive - expected a newline
-d:\document\project\opencv demo\opencvdemo1\opencvdemo1\calib.cpp(47): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-d:\document\project\opencv demo\opencvdemo1\opencvdemo1\calib.cpp(48): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-d:\document\project\opencv demo\opencvdemo1\opencvdemo1\calib.cpp(86): error C2065: 'camera1ImagePoints': undeclared identifier
-d:\document\project\opencv demo\opencvdemo1\opencvdemo1\calib.cpp(86): error C2065: 'camera2ImagePoints': undeclared identifier
-d:\document\project\opencv demo\opencvdemo1\opencvdemo1\calib.cpp(87): error C2065: 'cameraMatrix': undeclared identifier
-d:\document\project\opencv demo\opencvdemo1\opencvdemo1\calib.cpp(87): error C2065: 'distortionCoefficients': undeclared identifier
-d:\document\project\opencv demo\opencvdemo1\opencvdemo1\calib.cpp(88): error C2065: 'cameraMatrix': undeclared identifier
-d:\document\project\opencv demo\opencvdemo1\opencvdemo1\calib.cpp(88): error C2065: 'distortionCoefficients': undeclared identifier
-d:\document\project\opencv demo\opencvdemo1\opencvdemo1\calib.cpp(89): error C2065: 'imageSize': undeclared identifier
-d:\document\project\opencv demo\opencvdemo1\opencvdemo1\calib.cpp(89): error C2065: 'rotationMatrix': undeclared identifier
-d:\document\project\opencv demo\opencvdemo1\opencvdemo1\calib.cpp(89): error C2065: 'essentialMatrix': undeclared identifier
-d:\document\project\opencv demo\opencvdemo1\opencvdemo1\calib.cpp(89): error C2065: 'fundamentalMatrix': undeclared identifier
-  Generating Code...
+  openCVDemo1.vcxproj -> D:\document\project\opencv demo\openCVDemo1\x64\Debug\openCVDemo1.exe
+  openCVDemo1.vcxproj -> D:\document\project\opencv demo\openCVDemo1\x64\Debug\openCVDemo1.pdb (Full PDB)

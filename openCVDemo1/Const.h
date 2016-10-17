@@ -1,2 +1,5 @@
-const char* calibImgName = "calib_img%02d%02d.png";
-const int cameraNum = 2;
+extern const char* calibImgName;
+extern const int calibImgNameLength;
+extern const char* windowName;
+extern const int windowNameLength;
+extern const int cameraNum;

@@ -83,16 +83,16 @@ void Calib::Calibrate(const int image_pair_num)
 	cvInitMatHeader(&image_points, all_points, 1, CV_32FC2, corners);
 	cvInitMatHeader(&point_counts, image_num, 1, CV_32SC1, p_count);
 
-	double rms = cvStereoCalibrate(&object_points, camera1ImagePoints, camera2ImagePoints,
-		cameraMatrix[0], distortionCoefficients[0],
-		cameraMatrix[1], distortionCoefficients[1],
-		imageSize, rotationMatrix, translation, essentialMatrix, fundamentalMatrix,
-		TermCriteria(CV_TERMCRIT_ITER + CV_TERMCRIT_EPS, 100, 1e-5),
-		CV_CALIB_FIX_ASPECT_RATIO +
-		CV_CALIB_ZERO_TANGENT_DIST +
-		CV_CALIB_SAME_FOCAL_LENGTH +
-		CV_CALIB_RATIONAL_MODEL +
-		CV_CALIB_FIX_K3 + CV_CALIB_FIX_K4 + CV_CALIB_FIX_K5);
+	//double rms = cvStereoCalibrate(&object_points, camera1ImagePoints, camera2ImagePoints,
+	//	cameraMatrix[0], distortionCoefficients[0],
+	//	cameraMatrix[1], distortionCoefficients[1],
+	//	imageSize, rotationMatrix, translation, essentialMatrix, fundamentalMatrix,
+	//	TermCriteria(CV_TERMCRIT_ITER + CV_TERMCRIT_EPS, 100, 1e-5),
+	//	CV_CALIB_FIX_ASPECT_RATIO +
+	//	CV_CALIB_ZERO_TANGENT_DIST +
+	//	CV_CALIB_SAME_FOCAL_LENGTH +
+	//	CV_CALIB_RATIONAL_MODEL +
+	//	CV_CALIB_FIX_K3 + CV_CALIB_FIX_K4 + CV_CALIB_FIX_K5);
 
 	//// (5)“à•”ƒpƒ‰ƒ[ƒ^C˜c‚ÝŒW”‚Ì„’è
 	//cvCalibrateCamera2(&object_points, &image_points, &point_counts, cvSize(src_img[0]->width, src_img[0]->height), intrinsic, distortion);
