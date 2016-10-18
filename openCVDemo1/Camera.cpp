@@ -7,8 +7,9 @@ using namespace cv;
 
 int Camera::takePic()
 {
-	VideoCapture *cap = new VideoCapture[cameraNum];//デバイスのオープン\
-
+	VideoCapture *cap = new VideoCapture[cameraNum];//デバイスのオープン
+	Mat *frame = new Mat[cameraNum];
+	char **buf = new char*[cameraNum];
 	for (int i = 0; i < cameraNum; i++) {
 		cap[i] = VideoCapture(i);
 		if (!cap[i].isOpened())//カメラデバイスが正常にオープンしたか確認．
@@ -17,16 +18,12 @@ int Camera::takePic()
 			cout << "カメラ" << i << "読み込みに失敗した" << endl;
 			return 0;
 		}
-	}
-	int count = 0;
-
-	Mat *frame = new Mat[cameraNum];
-	char **buf = new char*[cameraNum];
-	for (int i = 0; i < cameraNum; i++) {
 		buf[i] = new char[windowNameLength];
 		sprintf(buf[i], windowName, i);
 		cout << buf[i] << endl;
 	}
+	int count = 0;
+
 	while (1)//無限ループ
 	{
 		for (int i = 0; i < cameraNum; i++) {

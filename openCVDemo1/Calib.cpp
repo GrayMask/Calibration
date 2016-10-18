@@ -16,32 +16,43 @@ void Calib::Calibrate(const int image_pair_num)
 {
 	int i, j, k;
 	int corner_count, found;
-	int image_num = image_pair_num * 2;
+	int image_num = image_pair_num * cameraNum;
 	int *p_count = new int[image_num];
 	int all_points = image_num * PAT_SIZE;
-	IplImage **src_img = new IplImage*[image_num];
+	IplImage ***src_img = new IplImage**[cameraNum];
+	for (i = 0; i < image_pair_num; i++) {
+		src_img[i] = new IplImage*[image_pair_num];
+	}
 	CvSize pattern_size = cvSize(PAT_COL, PAT_ROW);
 	CvPoint3D32f *objects = new CvPoint3D32f[all_points];
-	CvPoint2D32f *corners = (CvPoint2D32f *)cvAlloc(sizeof(CvPoint2D32f) * all_points);
+	CvPoint2D32f **corners = (CvPoint2D32f **)cvAlloc(sizeof(CvPoint2D32f) * cameraNum);
+	for (i = 0; i < cameraNum; i++) {
+		corners[i] = (CvPoint2D32f *)cvAlloc(sizeof(CvPoint2D32f) * all_points);
+	}
 	CvMat object_points;
-	CvMat image_points;
+	CvMat **image_points = new CvMat*[cameraNum];
 	CvMat point_counts;
-	CvMat *intrinsic = cvCreateMat(3, 3, CV_32FC1);
+	CvMat *intrinsic = new CvMat[cameraNum];
 	CvMat *rotation = cvCreateMat(1, 3, CV_32FC1);
 	CvMat *translation = cvCreateMat(1, 3, CV_32FC1);
-	CvMat *distortion = cvCreateMat(1, 4, CV_32FC1);
+	CvMat *distortion = new CvMat[cameraNum];
+	CvMat *essentialMatrix;
+	CvMat *fundamentalMatrix;
 
 	// (1)キャリブレーション画像の読み込み
-	for (i = 0; i < image_num; i++) {
-		char buf[32];
-		sprintf(buf, calibImgName, i);
-		if ((src_img[i] = cvLoadImage(buf, CV_LOAD_IMAGE_COLOR)) == NULL) {
-			fprintf(stderr, "cannot load image file : %s\n", buf);
+	for (i = 0; i < cameraNum; i++) {
+		for (j = 0; j < image_pair_num; j++) {
+			char buf[32];
+			sprintf(buf, calibImgName, j, i);
+			if ((src_img[i][j] = cvLoadImage(buf, CV_LOAD_IMAGE_COLOR)) == NULL) {
+				fprintf(stderr, "cannot load image file : %s\n", buf);
+			}
 		}
+		
 	}
 
 	// (2)3次元空間座標の設定
-	for (i = 0; i < image_num; i++) {
+	for (i = 0; i < image_pair_num; i++) {
 		for (j = 0; j < PAT_ROW; j++) {
 			for (k = 0; k < PAT_COL; k++) {
 				objects[i * PAT_SIZE + j * PAT_COL + k].x = j * CHESS_SIZE;
@@ -55,44 +66,42 @@ void Calib::Calibrate(const int image_pair_num)
 	// (3)チェスボード（キャリブレーションパターン）のコーナー検出
 	int found_num = 0;
 	cvNamedWindow("Calibration", CV_WINDOW_AUTOSIZE);
-	for (i = 0; i < image_num; i++) {
-		found = cvFindChessboardCorners(src_img[i], pattern_size, &corners[i * PAT_SIZE], &corner_count);
-		fprintf(stderr, "%02d...", i);
-		if (found) {
-			fprintf(stderr, "ok\n");
-			found_num++;
+	for (i = 0; i < cameraNum; i++) {
+		for (j = 0; j < image_pair_num; j++) {
+			found = cvFindChessboardCorners(src_img[i][j], pattern_size, &corners[i][j * PAT_SIZE], &corner_count);
+			fprintf(stderr, "%02d...", i);
+			if (found) {
+				fprintf(stderr, "ok\n");
+				found_num++;
+			}
+			else {
+				fprintf(stderr, "fail\n");
+			}
+			// (4)コーナー位置をサブピクセル精度に修正，描画
+			IplImage *src_gray = cvCreateImage(cvGetSize(src_img[i][j]), IPL_DEPTH_8U, 1);
+			cvCvtColor(src_img[i][j], src_gray, CV_BGR2GRAY);
+			cvFindCornerSubPix(src_gray, &corners[i][j * PAT_SIZE], corner_count,
+				cvSize(3, 3), cvSize(-1, -1), cvTermCriteria(CV_TERMCRIT_ITER | CV_TERMCRIT_EPS, 20, 0.03));
+			cvDrawChessboardCorners(src_img[i][j], pattern_size, &corners[i][j * PAT_SIZE], corner_count, found);
+			p_count[i] = corner_count;
+			cvShowImage("Calibration", src_img[i][j]);
+			cvWaitKey(0);
 		}
-		else {
-			fprintf(stderr, "fail\n");
-		}
-		// (4)コーナー位置をサブピクセル精度に修正，描画
-		IplImage *src_gray = cvCreateImage(cvGetSize(src_img[i]), IPL_DEPTH_8U, 1);
-		cvCvtColor(src_img[i], src_gray, CV_BGR2GRAY);
-		cvFindCornerSubPix(src_gray, &corners[i * PAT_SIZE], corner_count,
-			cvSize(3, 3), cvSize(-1, -1), cvTermCriteria(CV_TERMCRIT_ITER | CV_TERMCRIT_EPS, 20, 0.03));
-		cvDrawChessboardCorners(src_img[i], pattern_size, &corners[i * PAT_SIZE], corner_count, found);
-		p_count[i] = corner_count;
-		cvShowImage("Calibration", src_img[i]);
-		cvWaitKey(0);
 	}
 	cvDestroyWindow("Calibration");
 
 	if (found_num != image_num)
 		//return -1;
 		return;
-	cvInitMatHeader(&image_points, all_points, 1, CV_32FC2, corners);
+	for (i = 0; i < cameraNum; i++) {
+		cvInitMatHeader(image_points[i], all_points, 1, CV_32FC2, corners[i]);
+	}
 	cvInitMatHeader(&point_counts, image_num, 1, CV_32SC1, p_count);
 
-	//double rms = cvStereoCalibrate(&object_points, camera1ImagePoints, camera2ImagePoints,
-	//	cameraMatrix[0], distortionCoefficients[0],
-	//	cameraMatrix[1], distortionCoefficients[1],
-	//	imageSize, rotationMatrix, translation, essentialMatrix, fundamentalMatrix,
-	//	TermCriteria(CV_TERMCRIT_ITER + CV_TERMCRIT_EPS, 100, 1e-5),
-	//	CV_CALIB_FIX_ASPECT_RATIO +
-	//	CV_CALIB_ZERO_TANGENT_DIST +
-	//	CV_CALIB_SAME_FOCAL_LENGTH +
-	//	CV_CALIB_RATIONAL_MODEL +
-	//	CV_CALIB_FIX_K3 + CV_CALIB_FIX_K4 + CV_CALIB_FIX_K5);
+	double rms = cvStereoCalibrate(&object_points, image_points[0], image_points[1], &point_counts,
+		&intrinsic[0], &distortion[0],
+		&intrinsic[1], &distortion[1],
+		cvSize(src_img[0][0]->width, src_img[0][0]->height), rotation, translation, essentialMatrix, fundamentalMatrix);
 
 	//// (5)内部パラメータ，歪み係数の推定
 	//cvCalibrateCamera2(&object_points, &image_points, &point_counts, cvSize(src_img[0]->width, src_img[0]->height), intrinsic, distortion);
@@ -113,7 +122,8 @@ void Calib::Calibrate(const int image_pair_num)
 	cvWrite(fs, "distortion", distortion);
 	cvReleaseFileStorage(&fs);
 
-	for (i = 0; i < image_num; i++) {
-		cvReleaseImage(&src_img[i]);
+	for (i = 0; i < cameraNum; i++) {
+		for (j = 0; j < image_pair_num; j++) {
+		cvReleaseImage(&src_img[i][j]);
 	}
 }
