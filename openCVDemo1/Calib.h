@@ -3,6 +3,6 @@
 class Calib
 {
 public:
-	static void Calibrate(int image_num);
+	static void Calibrate();
 };
 #endif
