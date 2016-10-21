@@ -1,129 +1,166 @@
-#include "Calib.h";
+ï»¿#include "Calib.h";
 #include "Const.h";
 #include "opencv2/opencv.hpp";
 #include <iostream>;
 using namespace std;
 using namespace cv;
 
-//#define IMAGE_NUM  (25)         /* ‰æ‘œ” */
-#define PAT_ROW    (7)          /* ƒpƒ^[ƒ“‚Ìs” */
-#define PAT_COL    (10)         /* ƒpƒ^[ƒ“‚Ì—ñ” */
-#define PAT_SIZE   (PAT_ROW*PAT_COL)
-//#define ALL_POINTS (IMAGE_NUM*PAT_SIZE)
-#define CHESS_SIZE (24.0)       /* ƒpƒ^[ƒ“1ƒ}ƒX‚Ì1•ÓƒTƒCƒY[mm] */
-
-void Calib::Calibrate(const int image_pair_num)
+void Calib::Calibrate()
 {
-	int i, j, k;
-	int corner_count, found;
-	int image_num = image_pair_num * cameraNum;
-	int *p_count = new int[image_num];
-	int all_points = image_num * PAT_SIZE;
-	IplImage ***src_img = new IplImage**[cameraNum];
-	for (i = 0; i < image_pair_num; i++) {
-		src_img[i] = new IplImage*[image_pair_num];
-	}
-	CvSize pattern_size = cvSize(PAT_COL, PAT_ROW);
-	CvPoint3D32f *objects = new CvPoint3D32f[all_points];
-	CvPoint2D32f **corners = (CvPoint2D32f **)cvAlloc(sizeof(CvPoint2D32f) * cameraNum);
-	for (i = 0; i < cameraNum; i++) {
-		corners[i] = (CvPoint2D32f *)cvAlloc(sizeof(CvPoint2D32f) * all_points);
-	}
-	CvMat object_points;
-	CvMat **image_points = new CvMat*[cameraNum];
-	CvMat point_counts;
-	CvMat *intrinsic = new CvMat[cameraNum];
-	CvMat *rotation = cvCreateMat(1, 3, CV_32FC1);
-	CvMat *translation = cvCreateMat(1, 3, CV_32FC1);
-	CvMat *distortion = new CvMat[cameraNum];
-	CvMat *essentialMatrix;
-	CvMat *fundamentalMatrix;
+	int displayCorners = 1;
+	int showUndistorted = 1;
+	bool isVerticalStereo = false;//OpenCV can handle left-right
+								  //or up-down camera arrangements
+	const int maxScale = 1;
 
-	// (1)ƒLƒƒƒŠƒuƒŒ[ƒVƒ‡ƒ“‰æ‘œ‚Ì“Ç‚İ‚İ
-	for (i = 0; i < cameraNum; i++) {
-		for (j = 0; j < image_pair_num; j++) {
-			char buf[32];
-			sprintf(buf, calibImgName, j, i);
-			if ((src_img[i][j] = cvLoadImage(buf, CV_LOAD_IMAGE_COLOR)) == NULL) {
-				fprintf(stderr, "cannot load image file : %s\n", buf);
-			}
+	//FILE* f = fopen(imageList, "rt");
+	int i, j, lr, nframes, n = patRow * patCol, N = 0;
+	vector<string> imageNames[2];
+	vector<CvPoint3D32f> objectPoints;
+	vector<CvPoint2D32f> points[2];
+	vector<int> npoints;
+	vector<uchar> active[2];
+	vector<CvPoint2D32f> temp(n);
+	CvSize imageSize = { 0,0 };
+	// ARRAY AND VECTOR STORAGE:
+	double M1[3][3], M2[3][3], D1[5], D2[5];
+	double R[3][3], T[3], E[3][3], F[3][3];
+	CvMat _M1 = cvMat(3, 3, CV_64F, M1);
+	CvMat _M2 = cvMat(3, 3, CV_64F, M2);
+	CvMat _D1 = cvMat(1, 5, CV_64F, D1);
+	CvMat _D2 = cvMat(1, 5, CV_64F, D2);
+	CvMat _R = cvMat(3, 3, CV_64F, R);
+	CvMat _T = cvMat(3, 1, CV_64F, T);
+	CvMat _E = cvMat(3, 3, CV_64F, E);
+	CvMat _F = cvMat(3, 3, CV_64F, F);
+	if (displayCorners)
+		cvNamedWindow("corners", 1);
+	// READ IN THE LIST OF CHESSBOARDS:
+	//if (!f)
+	//{
+	//	fprintf(stderr, "can not open file %s\n", imageList);
+	//	return;
+	//}
+	for (i = 0;; i++)
+	{
+		int count = 0, result = 0;
+		lr = i % 2;
+		vector<CvPoint2D32f>& pts = points[lr];
+
+		char buf[32];
+		int imagePairNum = i / 2;
+		sprintf(buf, calibImgName, imagePairNum, lr);
+		IplImage* img;
+		if ((img = cvLoadImage(buf, 0)) == NULL) {
+			//fprintf(stderr, "cannot load image file : %s\n", buf);
+			break;
 		}
-		
-	}
 
-	// (2)3ŸŒ³‹óŠÔÀ•W‚Ìİ’è
-	for (i = 0; i < image_pair_num; i++) {
-		for (j = 0; j < PAT_ROW; j++) {
-			for (k = 0; k < PAT_COL; k++) {
-				objects[i * PAT_SIZE + j * PAT_COL + k].x = j * CHESS_SIZE;
-				objects[i * PAT_SIZE + j * PAT_COL + k].y = k * CHESS_SIZE;
-				objects[i * PAT_SIZE + j * PAT_COL + k].z = 0.0;
+		imageSize = cvGetSize(img);
+		imageNames[lr].push_back(buf);
+		//FIND CHESSBOARDS AND CORNERS THEREIN:
+		for (int s = 1; s <= maxScale; s++)
+		{
+			IplImage* timg = img;
+			if (s > 1)
+			{
+				timg = cvCreateImage(cvSize(img->width*s, img->height*s),
+					img->depth, img->nChannels);
+				cvResize(img, timg, CV_INTER_CUBIC);
 			}
+			result = cvFindChessboardCorners(timg, cvSize(patRow, patCol),
+				&temp[0], &count,
+				CV_CALIB_CB_ADAPTIVE_THRESH |
+				CV_CALIB_CB_NORMALIZE_IMAGE);
+			if (timg != img)
+				cvReleaseImage(&timg);
+			if (result || s == maxScale)
+				for (j = 0; j < count; j++)
+				{
+					temp[j].x /= s;
+					temp[j].y /= s;
+				}
+			if (result)
+				break;
 		}
-	}
-	cvInitMatHeader(&object_points, all_points, 3, CV_32FC1, objects);
-
-	// (3)ƒ`ƒFƒXƒ{[ƒhiƒLƒƒƒŠƒuƒŒ[ƒVƒ‡ƒ“ƒpƒ^[ƒ“j‚ÌƒR[ƒi[ŒŸo
-	int found_num = 0;
-	cvNamedWindow("Calibration", CV_WINDOW_AUTOSIZE);
-	for (i = 0; i < cameraNum; i++) {
-		for (j = 0; j < image_pair_num; j++) {
-			found = cvFindChessboardCorners(src_img[i][j], pattern_size, &corners[i][j * PAT_SIZE], &corner_count);
-			fprintf(stderr, "%02d...", i);
-			if (found) {
-				fprintf(stderr, "ok\n");
-				found_num++;
-			}
-			else {
-				fprintf(stderr, "fail\n");
-			}
-			// (4)ƒR[ƒi[ˆÊ’u‚ğƒTƒuƒsƒNƒZƒ‹¸“x‚ÉC³C•`‰æ
-			IplImage *src_gray = cvCreateImage(cvGetSize(src_img[i][j]), IPL_DEPTH_8U, 1);
-			cvCvtColor(src_img[i][j], src_gray, CV_BGR2GRAY);
-			cvFindCornerSubPix(src_gray, &corners[i][j * PAT_SIZE], corner_count,
-				cvSize(3, 3), cvSize(-1, -1), cvTermCriteria(CV_TERMCRIT_ITER | CV_TERMCRIT_EPS, 20, 0.03));
-			cvDrawChessboardCorners(src_img[i][j], pattern_size, &corners[i][j * PAT_SIZE], corner_count, found);
-			p_count[i] = corner_count;
-			cvShowImage("Calibration", src_img[i][j]);
-			cvWaitKey(0);
+		if (displayCorners)
+		{
+			printf("%s\n", buf);
+			IplImage* cimg = cvCreateImage(imageSize, 8, 3);
+			cvCvtColor(img, cimg, CV_GRAY2BGR);
+			cvDrawChessboardCorners(cimg, cvSize(patRow, patCol), &temp[0],
+				count, result);
+			cvShowImage("corners", cimg);
+			if (cvWaitKey(0) == 113) //Allow Q to next picture
+				cvDestroyWindow("corners");
+			cvReleaseImage(&cimg);
+			if (cvWaitKey(0) == 27) //Allow ESC to quit
+				exit(-1);
 		}
+		else
+			putchar('.');
+		N = pts.size();
+		pts.resize(N + n, cvPoint2D32f(0, 0));
+		active[lr].push_back((uchar)result);
+		//assert( result != 0 );
+		if (result)
+		{
+			//Calibration will suffer without subpixel interpolation
+			cvFindCornerSubPix(img, &temp[0], count,
+				cvSize(11, 11), cvSize(-1, -1),
+				cvTermCriteria(CV_TERMCRIT_ITER + CV_TERMCRIT_EPS,
+					30, 0.01));
+			copy(temp.begin(), temp.end(), pts.begin() + N);
+		}
+		cvReleaseImage(&img);
 	}
-	cvDestroyWindow("Calibration");
+	//fclose(f);
+	printf("\n");
+	// HARVEST CHESSBOARD 3D OBJECT POINT LIST:
+	nframes = active[0].size();//Number of good chessboads found
 
-	if (found_num != image_num)
-		//return -1;
-		return;
-	for (i = 0; i < cameraNum; i++) {
-		cvInitMatHeader(image_points[i], all_points, 1, CV_32FC2, corners[i]);
-	}
-	cvInitMatHeader(&point_counts, image_num, 1, CV_32SC1, p_count);
+	N = nframes*n;
+	objectPoints.resize(N);
+	for (i = 0; i < patRow; i++)
+		for (j = 0; j <patCol; j++)
+			objectPoints[i*patRow + j] =
+			cvPoint3D32f(i*squareSize, j*squareSize, 0);
+	for (i = 1; i < nframes; i++)
+		copy(objectPoints.begin(), objectPoints.begin() + n,
+			objectPoints.begin() + i*n);
+	npoints.resize(nframes, n);
+	CvMat _objectPoints = cvMat(1, N, CV_32FC3, &objectPoints[0]);
+	CvMat _imagePoints1 = cvMat(1, N, CV_32FC2, &points[0][0]);
+	CvMat _imagePoints2 = cvMat(1, N, CV_32FC2, &points[1][0]);
+	CvMat _npoints = cvMat(1, npoints.size(), CV_32S, &npoints[0]);
+	cvSetIdentity(&_M1);
+	cvSetIdentity(&_M2);
+	cvZero(&_D1);
+	cvZero(&_D2);
 
-	double rms = cvStereoCalibrate(&object_points, image_points[0], image_points[1], &point_counts,
-		&intrinsic[0], &distortion[0],
-		&intrinsic[1], &distortion[1],
-		cvSize(src_img[0][0]->width, src_img[0][0]->height), rotation, translation, essentialMatrix, fundamentalMatrix);
+	// CALIBRATE THE STEREO CAMERAS
+	printf("Running stereo calibration ...");
+	fflush(stdout);
+	cvStereoCalibrate(&_objectPoints, &_imagePoints1,
+		&_imagePoints2, &_npoints,
+		&_M1, &_D1, &_M2, &_D2,
+		imageSize, &_R, &_T, &_E, &_F, CV_CALIB_FIX_ASPECT_RATIO +
+		CV_CALIB_ZERO_TANGENT_DIST +
+		CV_CALIB_SAME_FOCAL_LENGTH,
+		cvTermCriteria(CV_TERMCRIT_ITER +
+			CV_TERMCRIT_EPS, 100, 1e-5)
+	);
+	printf(" done\n");
 
-	//// (5)“à•”ƒpƒ‰ƒ[ƒ^C˜c‚İŒW”‚Ì„’è
-	//cvCalibrateCamera2(&object_points, &image_points, &point_counts, cvSize(src_img[0]->width, src_img[0]->height), intrinsic, distortion);
-
-	//// (6)ŠO•”ƒpƒ‰ƒ[ƒ^‚Ì„’è
-	//CvMat sub_image_points, sub_object_points;
-	//int base = 0;
-	//cvGetRows(&image_points, &sub_image_points, base * PAT_SIZE, (base + 1) * PAT_SIZE);
-	//cvGetRows(&object_points, &sub_object_points, base * PAT_SIZE, (base + 1) * PAT_SIZE);
-	//cvFindExtrinsicCameraParams2(&sub_object_points, &sub_image_points, intrinsic, distortion, rotation, translation);
-
-	// (7)XMLƒtƒ@ƒCƒ‹‚Ö‚Ì‘‚«o‚µ
+	// XMLÆ’tÆ’@Æ’CÆ’â€¹â€šÃ–â€šÃŒÂâ€˜â€šÂ«Âoâ€šÂµ
 	CvFileStorage *fs;
 	fs = cvOpenFileStorage("camera.xml", 0, CV_STORAGE_WRITE);
-	cvWrite(fs, "intrinsic", intrinsic);
-	cvWrite(fs, "rotation", rotation);
-	cvWrite(fs, "translation", translation); 
-	cvWrite(fs, "distortion", distortion);
+	cvWrite(fs, "intrinsic-camera1", &_M1);
+	cvWrite(fs, "intrinsic-camera2", &_M2);
+	cvWrite(fs, "distortion-camera1", &_D1);
+	cvWrite(fs, "distortion-camera2", &_D1);
+	cvWrite(fs, "rotation", &_R);
+	cvWrite(fs, "translation", &_T);
 	cvReleaseFileStorage(&fs);
 
-	for (i = 0; i < cameraNum; i++) {
-		for (j = 0; j < image_pair_num; j++) {
-		cvReleaseImage(&src_img[i][j]);
-	}
 }
