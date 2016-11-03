@@ -9,3 +9,4 @@ extern const int calibImgNameLength = 17;
 extern const int patRow = 6; /* パターンの行数 */
 extern const int patCol = 9; /* パターンの列数 */
 extern const float squareSize = 24.0; /* パターン1マスの1辺サイズ[mm] */
+extern const char* calib_file = "D:\\document\\project\\3dSurface\\code\\calibration_result\\camera.xml";

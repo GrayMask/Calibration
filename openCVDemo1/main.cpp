@@ -3,6 +3,6 @@
 
 int main(int argh, char* argv[])
 {
-	Camera::takePic();
+	//Camera::takePic();
 	Calib::Calibrate();
 }

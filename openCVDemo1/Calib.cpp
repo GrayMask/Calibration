@@ -154,13 +154,13 @@ void Calib::Calibrate()
 
 	// XMLƒtƒ@ƒCƒ‹‚Ö‚Ì‘‚«o‚µ
 	CvFileStorage *fs;
-	fs = cvOpenFileStorage("camera.xml", 0, CV_STORAGE_WRITE);
-	cvWrite(fs, "intrinsic-camera1", &_M1);
-	cvWrite(fs, "intrinsic-camera2", &_M2);
-	cvWrite(fs, "distortion-camera1", &_D1);
-	cvWrite(fs, "distortion-camera2", &_D1);
-	cvWrite(fs, "rotation", &_R);
-	cvWrite(fs, "translation", &_T);
+	fs = cvOpenFileStorage(calib_file, 0, CV_STORAGE_WRITE);
+	cvWrite(fs, "cam1_intrinsics", &_M1);
+	cvWrite(fs, "cam2_intrinsics", &_M2);
+	cvWrite(fs, "cam1_distorsion", &_D1);
+	cvWrite(fs, "cam2_distorsion", &_D1);
+	cvWrite(fs, "R", &_R);
+	cvWrite(fs, "T", &_T);
 	cvReleaseFileStorage(&fs);
 
 }
