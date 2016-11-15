@@ -141,15 +141,17 @@ void Calib::Calibrate()
 	// CALIBRATE THE STEREO CAMERAS
 	printf("Running stereo calibration ...");
 	fflush(stdout);
+	cvCalibrateCamera2(&_objectPoints, &_imagePoints1, &_npoints, imageSize,
+		&_M1, &_D1, NULL, NULL, CV_CALIB_FIX_K3);
+	cvCalibrateCamera2(&_objectPoints, &_imagePoints2, &_npoints, imageSize,
+		&_M2, &_D2, NULL, NULL, CV_CALIB_FIX_K3);
 	cvStereoCalibrate(&_objectPoints, &_imagePoints1,
 		&_imagePoints2, &_npoints,
 		&_M1, &_D1, &_M2, &_D2,
-		imageSize, &_R, &_T, &_E, &_F, CV_CALIB_FIX_ASPECT_RATIO +
-		CV_CALIB_ZERO_TANGENT_DIST +
-		CV_CALIB_SAME_FOCAL_LENGTH,
+		imageSize, &_R, &_T, &_E, &_F, CV_CALIB_FIX_INTRINSIC,
 		cvTermCriteria(CV_TERMCRIT_ITER +
-			CV_TERMCRIT_EPS, 100, 1e-5)
-	);
+			CV_TERMCRIT_EPS, 100, 1e-5));
+	
 	printf(" done\n");
 
 	// XMLƒtƒ@ƒCƒ‹‚Ö‚Ì‘‚«o‚µ
@@ -158,7 +160,7 @@ void Calib::Calibrate()
 	cvWrite(fs, "cam1_intrinsics", &_M1);
 	cvWrite(fs, "cam2_intrinsics", &_M2);
 	cvWrite(fs, "cam1_distorsion", &_D1);
-	cvWrite(fs, "cam2_distorsion", &_D1);
+	cvWrite(fs, "cam2_distorsion", &_D2);
 	cvWrite(fs, "R", &_R);
 	cvWrite(fs, "T", &_T);
 	cvReleaseFileStorage(&fs);
