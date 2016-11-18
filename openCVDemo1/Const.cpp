@@ -8,5 +8,5 @@ extern const char* calibImgName = "calib_img%02d%02d.png";
 extern const int calibImgNameLength = 17;
 extern const int patRow = 6; /* パターンの行数 */
 extern const int patCol = 9; /* パターンの列数 */
-extern const float squareSize = 24.0; /* パターン1マスの1辺サイズ[mm] */
+extern const float squareSize = 24; /* パターン1マスの1辺サイズ[mm] */
 extern const char* calib_file = "D:\\document\\project\\3dSurface\\code\\calibration_result\\camera.xml";
