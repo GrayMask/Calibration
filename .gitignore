@@ -1,11 +1,10 @@
 .vs
 x64
-openCVDemo1.sln
 openCVDemo1.VC.db
 openCVDemo1/x64
 openCVDemo1/openCVDemo1.vcxproj
 openCVDemo1/openCVDemo1.vcxproj.filters
 openCVDemo1/openCVDemo1.vcxproj.user
-openCVDemo1/Const.cpp
+openCVDemo1/Path.cpp
 
 openCVDemo1.VC.VC.opendb
