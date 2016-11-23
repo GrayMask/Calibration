@@ -1,5 +1,6 @@
 #include "Camera.h";
 #include "Const.h";
+#include "Path.h";
 #include "opencv2/opencv.hpp";
 #include <iostream>;
 using namespace std;
@@ -23,7 +24,8 @@ int Camera::takePic()
 		cout << buf[i] << endl;
 	}
 	int count = 0;
-
+	vector<string> imagelist;
+	imagelist.resize(0);
 	while (1)//ñ≥å¿ÉãÅ[Év
 	{
 		for (int i = 0; i < cameraNum; i++) {
@@ -42,10 +44,18 @@ int Camera::takePic()
 				char *savedImgName = new char[calibImgNameLength];
 				sprintf(savedImgName, calibImgName, count, i);
 				imwrite(savedImgName, frame[i]);
+				imagelist.push_back(savedImgName);
 			}
 			count++;
 		}
 	}
 	destroyAllWindows();
+	FileStorage fs(imagelist_file, FileStorage::WRITE);
+	fs << "imagelist" << "[";
+	int ac = imagelist.size();
+	for (int i = 0; i < ac; i++) {
+		fs << imagelist[i];
+	}
+	fs << "]";
 	return count;
 }

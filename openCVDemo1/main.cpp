@@ -1,8 +1,8 @@
 ﻿#include "Camera.h"
-#include "Calib.h"
+#include "StereoCalib.h"
 
 int main(int argh, char* argv[])
 {
-	//Camera::takePic();
-	Calib::Calibrate();
+	Camera::takePic();
+	//StereoCalib::Calibrate();
 }
