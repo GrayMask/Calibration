@@ -141,19 +141,30 @@ void StereoCalib::Calibrate()
 	Mat cameraMatrix[2], distCoeffs[2];
 	cameraMatrix[0] = initCameraMatrix2D(objectPoints, imagePoints[0], imageSize, 0);
 	cameraMatrix[1] = initCameraMatrix2D(objectPoints, imagePoints[1], imageSize, 0);
-	Mat R, T, E, F;
+	Mat R, T, E, F, R1, R2, T1, T2;
 
+	calibrateCamera(objectPoints, imagePoints[0], imageSize,
+		cameraMatrix[0], distCoeffs[0], R1, T1, CV_CALIB_FIX_K3);
+	calibrateCamera(objectPoints, imagePoints[1], imageSize,
+		cameraMatrix[1], distCoeffs[1], R2, T2, CV_CALIB_FIX_K3);
 	double rms = stereoCalibrate(objectPoints, imagePoints[0], imagePoints[1],
 		cameraMatrix[0], distCoeffs[0],
 		cameraMatrix[1], distCoeffs[1],
-		imageSize, R, T, E, F,
-		CALIB_FIX_ASPECT_RATIO +
-		CALIB_ZERO_TANGENT_DIST +
-		CALIB_USE_INTRINSIC_GUESS +
-		CALIB_SAME_FOCAL_LENGTH +
-		CALIB_RATIONAL_MODEL +
-		CALIB_FIX_K3 + CALIB_FIX_K4 + CALIB_FIX_K5,
-		TermCriteria(TermCriteria::COUNT + TermCriteria::EPS, 100, 1e-5));
+		imageSize, R, T, E, F, CV_CALIB_FIX_INTRINSIC,
+		cvTermCriteria(CV_TERMCRIT_ITER +
+			CV_TERMCRIT_EPS, 100, 1e-5));
+
+	//double rms = stereoCalibrate(objectPoints, imagePoints[0], imagePoints[1],
+	//	cameraMatrix[0], distCoeffs[0],
+	//	cameraMatrix[1], distCoeffs[1],
+	//	imageSize, R, T, E, F,
+	//	CALIB_FIX_ASPECT_RATIO +
+	//	CALIB_ZERO_TANGENT_DIST +
+	//	CALIB_USE_INTRINSIC_GUESS +
+	//	CALIB_SAME_FOCAL_LENGTH +
+	//	CALIB_RATIONAL_MODEL +
+	//	CALIB_FIX_K3 + CALIB_FIX_K4 + CALIB_FIX_K5,
+	//	TermCriteria(TermCriteria::COUNT + TermCriteria::EPS, 100, 1e-5));
 	cout << "done with RMS error=" << rms << endl;
 	cout << cameraMatrix[0] << endl;
 	cout << cameraMatrix[1] << endl;
