@@ -149,7 +149,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Calib.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Const.cpp" />
     <ClCompile Include="main.cpp" />
@@ -157,7 +156,6 @@
     <ClCompile Include="StereoCalib.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Calib.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Const.h" />
     <ClInclude Include="Path.h" />

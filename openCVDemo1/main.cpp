@@ -4,5 +4,5 @@
 int main(int argh, char* argv[])
 {
 	Camera::takePic();
-	//StereoCalib::Calibrate();
+	StereoCalib::Calibrate();
 }

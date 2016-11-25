@@ -3,5 +3,12 @@
 <imagelist>
   calib_img0000.png calib_img0001.png calib_img0100.png
   calib_img0101.png calib_img0200.png calib_img0201.png
-  calib_img0300.png calib_img0301.png</imagelist>
+  calib_img0300.png calib_img0301.png calib_img0400.png
+  calib_img0401.png calib_img0500.png calib_img0501.png
+  calib_img0600.png calib_img0601.png calib_img0700.png
+  calib_img0701.png calib_img0800.png calib_img0801.png
+  calib_img0900.png calib_img0901.png calib_img1000.png
+  calib_img1001.png calib_img1100.png calib_img1101.png
+  calib_img1200.png calib_img1201.png calib_img1300.png
+  calib_img1301.png</imagelist>
 </opencv_storage>
